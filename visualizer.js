@@ -159,58 +159,58 @@ class CodeVisualizer {
         const profiles = {
             'CALL': {
                 heightMin: 4.0, heightMax: 5.5,
-                topWidthMin: 0.6, topWidthMax: 0.8,
-                bottomWidthMin: 1.8, bottomWidthMax: 2.4,
-                depthMin: 1.4, depthMax: 1.8,
+                topWidthMin: 0.4, topWidthMax: 0.6,    // Much narrower top
+                bottomWidthMin: 2.2, bottomWidthMax: 3.0, // Much wider base
+                depthMin: 1.8, depthMax: 2.4,
                 shape: 'trapezoidTower' // wide base, narrow top — grand tower
             },
             'RETURN': {
                 heightMin: 3.0, heightMax: 4.0,
-                topWidthMin: 0.8, topWidthMax: 1.0,
-                bottomWidthMin: 1.2, bottomWidthMax: 1.6,
-                depthMin: 1.0, depthMax: 1.4,
+                topWidthMin: 1.2, topWidthMax: 1.6,    // Wide top
+                bottomWidthMin: 0.6, bottomWidthMax: 0.8, // Narrow base
+                depthMin: 1.2, depthMax: 1.6,
                 shape: 'invertedTrapezoid' // narrow base, wide top — capstone
             },
             'LOOP': {
                 heightMin: 2.5, heightMax: 3.5,
-                topWidthMin: 0.5, topWidthMax: 0.7,
-                bottomWidthMin: 1.4, bottomWidthMax: 1.8,
-                depthMin: 1.2, depthMax: 1.5,
+                topWidthMin: 0.4, topWidthMax: 0.6,
+                bottomWidthMin: 1.6, bottomWidthMax: 2.2,
+                depthMin: 1.4, depthMax: 1.8,
                 shape: 'trapezoidWide' // wide and squat — repeating block
             },
             'IF': {
                 heightMin: 2.0, heightMax: 3.0,
-                topWidthMin: 0.4, topWidthMax: 0.6,
-                bottomWidthMin: 1.0, bottomWidthMax: 1.4,
-                depthMin: 0.8, depthMax: 1.2,
+                topWidthMin: 0.3, topWidthMax: 0.5,
+                bottomWidthMin: 1.2, bottomWidthMax: 1.6,
+                depthMin: 1.0, depthMax: 1.4,
                 shape: 'trapezoidAngled' // asymmetric trapezoid — decision
             },
             'ELSE': {
                 heightMin: 1.8, heightMax: 2.8,
-                topWidthMin: 0.4, topWidthMax: 0.6,
-                bottomWidthMin: 1.0, bottomWidthMax: 1.4,
-                depthMin: 0.8, depthMax: 1.2,
+                topWidthMin: 0.3, topWidthMax: 0.5,
+                bottomWidthMin: 1.2, bottomWidthMax: 1.6,
+                depthMin: 1.0, depthMax: 1.4,
                 shape: 'trapezoidAngled'
             },
             'DECL': {
                 heightMin: 1.5, heightMax: 2.5,
-                topWidthMin: 0.5, topWidthMax: 0.7,
-                bottomWidthMin: 0.8, bottomWidthMax: 1.2,
-                depthMin: 0.7, depthMax: 1.0,
+                topWidthMin: 0.3, topWidthMax: 0.5,
+                bottomWidthMin: 1.0, bottomWidthMax: 1.4,
+                depthMin: 0.8, depthMax: 1.2,
                 shape: 'trapezoidSlim' // slim trapezoid — declaration marker
             },
             'ASSIGN': {
                 heightMin: 1.0, heightMax: 1.8,
-                topWidthMin: 0.3, topWidthMax: 0.5,
-                bottomWidthMin: 0.6, bottomWidthMax: 1.0,
-                depthMin: 0.5, depthMax: 0.8,
+                topWidthMin: 0.2, topWidthMax: 0.4,
+                bottomWidthMin: 0.8, bottomWidthMax: 1.2,
+                depthMin: 0.6, depthMax: 1.0,
                 shape: 'trapezoidSmall' // smallest — incremental change
             },
             'DEFAULT': {
                 heightMin: 1.2, heightMax: 2.0,
-                topWidthMin: 0.4, topWidthMax: 0.6,
-                bottomWidthMin: 0.8, bottomWidthMax: 1.2,
-                depthMin: 0.6, depthMax: 0.9,
+                topWidthMin: 0.3, topWidthMax: 0.5,
+                bottomWidthMin: 0.9, bottomWidthMax: 1.3,
+                depthMin: 0.7, depthMax: 1.1,
                 shape: 'trapezoidSlim'
             }
         };
@@ -239,11 +239,16 @@ class CodeVisualizer {
         // For inverted trapezoid, swap top and bottom
         let topW, botW, topD, botD;
         if (profile.shape === 'invertedTrapezoid') {
-            topW = bw;  topD = d;
-            botW = tw;  botD = d * (tw / bw); // scale depth proportionally
+            topW = bw;  
+            botW = tw;  
+            topD = d;
+            botD = d * (botW / topW); // scale depth proportionally
         } else {
-            topW = tw;  topD = d * (tw / bw); // top depth scales with top width
-            botW = bw;  botD = d;
+            topW = tw;  
+            botW = bw;  
+            // Make depth taper similarly to width for true trapezoid shape
+            topD = d * 0.6; // top depth is proportionally smaller
+            botD = d;
         }
 
         const tw2 = topW / 2, bw2 = botW / 2;

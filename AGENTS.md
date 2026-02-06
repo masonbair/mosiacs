@@ -123,13 +123,13 @@ Each operation type has a distinct trapezoid shape reflecting its importance in 
 
 | Operation | Shape Style | Height Range | Bottom Width | Top Width | Role |
 |-----------|------------|--------------|--------------|-----------|------|
-| **CALL** | Trapezoid Tower | 4.0–5.5 | 1.8–2.4 | 0.6–0.8 | **Largest/tallest** — grand tower for function entry |
-| **RETURN** | Inverted Trapezoid | 3.0–4.0 | 1.2–1.6 | 0.8–1.0 | Tall capstone (narrow base, wide top) — function exit |
-| **LOOP** | Wide Trapezoid | 2.5–3.5 | 1.4–1.8 | 0.5–0.7 | Medium-large — repeating block structure |
-| **IF** | Angled Trapezoid | 2.0–3.0 | 1.0–1.4 | 0.4–0.6 | Medium — decision point |
-| **ELSE** | Angled Trapezoid | 1.8–2.8 | 1.0–1.4 | 0.4–0.6 | Medium — alternative path |
-| **DECL** | Slim Trapezoid | 1.5–2.5 | 0.8–1.2 | 0.5–0.7 | Medium-small — variable birth |
-| **ASSIGN** | Small Trapezoid | 1.0–1.8 | 0.6–1.0 | 0.3–0.5 | **Smallest** — incremental change |
+| **CALL** | Trapezoid Tower | 4.0–5.5 | 2.2–3.0 | 0.4–0.6 | **Largest/tallest** — grand tower for function entry (dramatic taper) |
+| **RETURN** | Inverted Trapezoid | 3.0–4.0 | 0.6–0.8 | 1.2–1.6 | Tall capstone (narrow base, wide top) — function exit |
+| **LOOP** | Wide Trapezoid | 2.5–3.5 | 1.6–2.2 | 0.4–0.6 | Medium-large — repeating block structure |
+| **IF** | Angled Trapezoid | 2.0–3.0 | 1.2–1.6 | 0.3–0.5 | Medium — decision point |
+| **ELSE** | Angled Trapezoid | 1.8–2.8 | 1.2–1.6 | 0.3–0.5 | Medium — alternative path |
+| **DECL** | Slim Trapezoid | 1.5–2.5 | 1.0–1.4 | 0.3–0.5 | Medium-small — variable birth |
+| **ASSIGN** | Small Trapezoid | 1.0–1.8 | 0.8–1.2 | 0.2–0.4 | **Smallest** — incremental change |
 
 ### Building-Off / Hierarchical Stacking
 
