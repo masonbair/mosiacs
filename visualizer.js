@@ -1,6 +1,13 @@
 /**
  * Babylon.js Visualizer for Code Mosaic
- * Creates a stained-glass spiral visualization of code execution
+ * Creates a stained-glass descending spiral visualization of code execution.
+ * 
+ * Design philosophy:
+ * - The spiral DESCENDS from top to bottom (execution flows downward like gravity)
+ * - Each operation type has a unique trapezoid-style shape and size hierarchy
+ * - CALL operations are the largest/tallest (they are function entry points)
+ * - Child operations (DECL, ASSIGN, LOOP, etc.) build off their parent CALL
+ * - Shapes are varied trapezoids/prisms to create a dynamic, organic skyline
  */
 class CodeVisualizer {
     constructor(canvas) {
@@ -23,13 +30,13 @@ class CodeVisualizer {
         this.scene = new BABYLON.Scene(this.engine);
         this.scene.clearColor = new BABYLON.Color4(0.1, 0.1, 0.18, 1);
 
-        // Create camera
+        // Create camera — positioned to look DOWN at the descending spiral
         this.camera = new BABYLON.ArcRotateCamera(
             "camera",
             Math.PI / 2,
-            Math.PI / 3,
-            50,
-            BABYLON.Vector3.Zero(),
+            Math.PI / 4, // slightly above looking down
+            60,
+            new BABYLON.Vector3(0, 10, 0), // target above origin
             this.scene
         );
         this.camera.attachControl(this.canvas, true);
@@ -47,7 +54,7 @@ class CodeVisualizer {
 
         const pointLight1 = new BABYLON.PointLight(
             "pointLight1",
-            new BABYLON.Vector3(10, 20, 10),
+            new BABYLON.Vector3(10, 30, 10),
             this.scene
         );
         pointLight1.intensity = 0.8;
@@ -55,7 +62,7 @@ class CodeVisualizer {
 
         const pointLight2 = new BABYLON.PointLight(
             "pointLight2",
-            new BABYLON.Vector3(-10, 15, -10),
+            new BABYLON.Vector3(-10, 25, -10),
             this.scene
         );
         pointLight2.intensity = 0.6;
@@ -92,7 +99,8 @@ class CodeVisualizer {
     }
 
     /**
-     * Create the spiral path
+     * Create the DESCENDING spiral path.
+     * Step 0 is at the TOP, and the path spirals downward.
      */
     createSpiralPath(steps) {
         const points = [];
@@ -101,12 +109,16 @@ class CodeVisualizer {
         const heightPerStep = 0.5;
         const turnsPerStep = 0.3;
 
+        // Calculate the total height so we can start at the top
+        const totalHeight = (steps - 1) * heightPerStep;
+
         for (let i = 0; i < steps; i++) {
             const angle = i * turnsPerStep;
             const currentRadius = radius + (i * radiusGrowth);
             const x = Math.cos(angle) * currentRadius;
             const z = Math.sin(angle) * currentRadius;
-            const y = i * heightPerStep;
+            // DESCENDING: start at totalHeight and go DOWN
+            const y = totalHeight - (i * heightPerStep);
             points.push(new BABYLON.Vector3(x, y, z));
         }
 
@@ -133,43 +145,228 @@ class CodeVisualizer {
     }
 
     /**
-     * Create a building/structure for a code operation
+     * Get the shape profile (size/height) for each operation type.
+     * 
+     * Hierarchy (biggest → smallest):
+     *   CALL     — tallest & widest (function entry, the "cathedral tower")
+     *   RETURN   — tall but narrower (function exit, the "capstone")
+     *   LOOP     — medium-large (loop structure, repeating motif)
+     *   IF/ELSE  — medium (branching decisions)
+     *   DECL     — medium-small (variable birth)
+     *   ASSIGN   — smallest (incremental change, builds off parent)
      */
-    createBuilding(step, position, color, type) {
-        // Vary building height based on type and depth
-        const height = 1.5 + Math.random() * 2;
-        const width = 0.8 + Math.random() * 0.4;
+    getShapeProfile(type) {
+        const profiles = {
+            'CALL': {
+                heightMin: 4.0, heightMax: 5.5,
+                topWidthMin: 0.6, topWidthMax: 0.8,
+                bottomWidthMin: 1.8, bottomWidthMax: 2.4,
+                depthMin: 1.4, depthMax: 1.8,
+                shape: 'trapezoidTower' // wide base, narrow top — grand tower
+            },
+            'RETURN': {
+                heightMin: 3.0, heightMax: 4.0,
+                topWidthMin: 0.8, topWidthMax: 1.0,
+                bottomWidthMin: 1.2, bottomWidthMax: 1.6,
+                depthMin: 1.0, depthMax: 1.4,
+                shape: 'invertedTrapezoid' // narrow base, wide top — capstone
+            },
+            'LOOP': {
+                heightMin: 2.5, heightMax: 3.5,
+                topWidthMin: 0.5, topWidthMax: 0.7,
+                bottomWidthMin: 1.4, bottomWidthMax: 1.8,
+                depthMin: 1.2, depthMax: 1.5,
+                shape: 'trapezoidWide' // wide and squat — repeating block
+            },
+            'IF': {
+                heightMin: 2.0, heightMax: 3.0,
+                topWidthMin: 0.4, topWidthMax: 0.6,
+                bottomWidthMin: 1.0, bottomWidthMax: 1.4,
+                depthMin: 0.8, depthMax: 1.2,
+                shape: 'trapezoidAngled' // asymmetric trapezoid — decision
+            },
+            'ELSE': {
+                heightMin: 1.8, heightMax: 2.8,
+                topWidthMin: 0.4, topWidthMax: 0.6,
+                bottomWidthMin: 1.0, bottomWidthMax: 1.4,
+                depthMin: 0.8, depthMax: 1.2,
+                shape: 'trapezoidAngled'
+            },
+            'DECL': {
+                heightMin: 1.5, heightMax: 2.5,
+                topWidthMin: 0.5, topWidthMax: 0.7,
+                bottomWidthMin: 0.8, bottomWidthMax: 1.2,
+                depthMin: 0.7, depthMax: 1.0,
+                shape: 'trapezoidSlim' // slim trapezoid — declaration marker
+            },
+            'ASSIGN': {
+                heightMin: 1.0, heightMax: 1.8,
+                topWidthMin: 0.3, topWidthMax: 0.5,
+                bottomWidthMin: 0.6, bottomWidthMax: 1.0,
+                depthMin: 0.5, depthMax: 0.8,
+                shape: 'trapezoidSmall' // smallest — incremental change
+            },
+            'DEFAULT': {
+                heightMin: 1.2, heightMax: 2.0,
+                topWidthMin: 0.4, topWidthMax: 0.6,
+                bottomWidthMin: 0.8, bottomWidthMax: 1.2,
+                depthMin: 0.6, depthMax: 0.9,
+                shape: 'trapezoidSlim'
+            }
+        };
+        return profiles[type] || profiles['DEFAULT'];
+    }
 
-        const building = BABYLON.MeshBuilder.CreateBox(
-            `building_${step}`,
-            { height: height, width: width, depth: width },
-            this.scene
-        );
+    /**
+     * Helper: random float in range
+     */
+    _rand(min, max) {
+        return min + Math.random() * (max - min);
+    }
 
+    /**
+     * Build a trapezoid mesh from a shape profile.
+     * Uses per-face vertices (24 total) so each face gets correct flat normals.
+     * The shape tapers from a wider bottom to a narrower top (or inverted).
+     * Both X-width AND Z-depth taper, creating a true truncated pyramid / trapezoid prism.
+     */
+    createTrapezoidMesh(name, profile) {
+        const h = this._rand(profile.heightMin, profile.heightMax);
+        const tw = this._rand(profile.topWidthMin, profile.topWidthMax);
+        const bw = this._rand(profile.bottomWidthMin, profile.bottomWidthMax);
+        const d = this._rand(profile.depthMin, profile.depthMax);
+
+        // For inverted trapezoid, swap top and bottom
+        let topW, botW, topD, botD;
+        if (profile.shape === 'invertedTrapezoid') {
+            topW = bw;  topD = d;
+            botW = tw;  botD = d * (tw / bw); // scale depth proportionally
+        } else {
+            topW = tw;  topD = d * (tw / bw); // top depth scales with top width
+            botW = bw;  botD = d;
+        }
+
+        const tw2 = topW / 2, bw2 = botW / 2;
+        const td2 = topD / 2, bd2 = botD / 2;
+
+        // 8 corner positions of the frustum
+        // Bottom (y=0)
+        const b0 = [-bw2, 0,  bd2]; // bottom-left-front
+        const b1 = [ bw2, 0,  bd2]; // bottom-right-front
+        const b2 = [ bw2, 0, -bd2]; // bottom-right-back
+        const b3 = [-bw2, 0, -bd2]; // bottom-left-back
+        // Top (y=h)
+        const t0 = [-tw2, h,  td2]; // top-left-front
+        const t1 = [ tw2, h,  td2]; // top-right-front
+        const t2 = [ tw2, h, -td2]; // top-right-back
+        const t3 = [-tw2, h, -td2]; // top-left-back
+
+        // Per-face vertices (4 verts × 6 faces = 24 vertices)
+        // Each face duplicates its corner positions so normals are independent
+        const positions = [
+            // Front face (z positive)
+            ...b0, ...b1, ...t1, ...t0,
+            // Back face (z negative)
+            ...b2, ...b3, ...t3, ...t2,
+            // Right face (x positive)
+            ...b1, ...b2, ...t2, ...t1,
+            // Left face (x negative)
+            ...b3, ...b0, ...t0, ...t3,
+            // Top face (y = h)
+            ...t0, ...t1, ...t2, ...t3,
+            // Bottom face (y = 0)
+            ...b3, ...b2, ...b1, ...b0,
+        ];
+
+        // Two triangles per face: 0,1,2 and 0,2,3
+        const indices = [];
+        for (let face = 0; face < 6; face++) {
+            const off = face * 4;
+            indices.push(off, off + 1, off + 2, off, off + 2, off + 3);
+        }
+
+        // Compute proper per-face normals
+        const normals = [];
+        BABYLON.VertexData.ComputeNormals(positions, indices, normals);
+
+        // UVs per face
+        const uvs = [];
+        for (let face = 0; face < 6; face++) {
+            uvs.push(0, 0,  1, 0,  1, 1,  0, 1);
+        }
+
+        const vertexData = new BABYLON.VertexData();
+        vertexData.positions = positions;
+        vertexData.indices = indices;
+        vertexData.normals = normals;
+        vertexData.uvs = uvs;
+
+        const mesh = new BABYLON.Mesh(name, this.scene);
+        vertexData.applyToMesh(mesh);
+
+        mesh._trapHeight = h;
+        mesh._trapTopWidth = topW;
+        mesh._trapBottomWidth = botW;
+
+        return mesh;
+    }
+
+    /**
+     * Create a building/structure for a code operation.
+     * 
+     * Each type gets a unique trapezoid shape and size based on its
+     * importance in the execution hierarchy.
+     * 
+     * @param {number} step - step index
+     * @param {object} position - BABYLON.Vector3 on the spiral path
+     * @param {object} color - {r, g, b, a}
+     * @param {string} type - operation type (CALL, ASSIGN, etc.)
+     * @param {object} stepData - the parsed trace step (has depth, name, etc.)
+     * @param {number} parentY - the Y offset contributed by the parent CALL building height
+     */
+    createBuilding(step, position, color, type, stepData, parentY) {
+        const profile = this.getShapeProfile(type);
+
+        // Create the trapezoid mesh
+        const building = this.createTrapezoidMesh(`building_${step}`, profile);
+
+        // Position: place on the spiral path.
+        // For non-CALL operations, offset upward by their parent's height
+        // so they visually "build off" the parent CALL.
         building.position = position.clone();
-        building.position.y += height / 2;
+        if (type !== 'CALL' && parentY > 0) {
+            building.position.y += parentY * 0.3; // partial stack on parent
+        }
+
+        // Slight random rotation for organic feel
+        building.rotation.y = Math.random() * 0.3 - 0.15;
 
         // Create stained glass material
         const material = this.createStainedGlassMaterial(`mat_${step}`, color);
         building.material = material;
 
-        // Add a glowing top
-        const top = BABYLON.MeshBuilder.CreateBox(
-            `top_${step}`,
-            { height: 0.2, width: width * 1.2, depth: width * 1.2 },
+        // Add a glowing crown/cap on top
+        const capHeight = 0.15;
+        const capWidth = building._trapTopWidth * 1.3;
+        const cap = BABYLON.MeshBuilder.CreateBox(
+            `cap_${step}`,
+            { height: capHeight, width: capWidth, depth: capWidth },
             this.scene
         );
-        top.position = building.position.clone();
-        top.position.y += height / 2 + 0.1;
-        const topMat = this.createStainedGlassMaterial(`topmat_${step}`, {
-            r: color.r * 1.5,
-            g: color.g * 1.5,
-            b: color.b * 1.5,
+        cap.position = building.position.clone();
+        cap.position.y += building._trapHeight + capHeight / 2;
+        if (type !== 'CALL' && parentY > 0) {
+            cap.position.y += parentY * 0.3;
+        }
+        const capMat = this.createStainedGlassMaterial(`capmat_${step}`, {
+            r: Math.min(color.r * 1.5, 1),
+            g: Math.min(color.g * 1.5, 1),
+            b: Math.min(color.b * 1.5, 1),
             a: 0.9
         });
-        top.material = topMat;
+        cap.material = capMat;
 
-        // Animate building appearance
+        // Animate building appearance (scale in)
         building.scaling = new BABYLON.Vector3(0.01, 0.01, 0.01);
         BABYLON.Animation.CreateAndStartAnimation(
             `anim_${step}`,
@@ -182,10 +379,10 @@ class CodeVisualizer {
             BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT
         );
 
-        top.scaling = new BABYLON.Vector3(0.01, 0.01, 0.01);
+        cap.scaling = new BABYLON.Vector3(0.01, 0.01, 0.01);
         BABYLON.Animation.CreateAndStartAnimation(
-            `animTop_${step}`,
-            top,
+            `animCap_${step}`,
+            cap,
             "scaling",
             60,
             30,
@@ -194,7 +391,7 @@ class CodeVisualizer {
             BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT
         );
 
-        // Add floating animation
+        // Subtle floating animation
         const floatAnim = new BABYLON.Animation(
             `float_${step}`,
             "position.y",
@@ -202,16 +399,18 @@ class CodeVisualizer {
             BABYLON.Animation.ANIMATIONTYPE_FLOAT,
             BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE
         );
+        const baseY = building.position.y;
         const keys = [
-            { frame: 0, value: building.position.y },
-            { frame: 60, value: building.position.y + 0.2 },
-            { frame: 120, value: building.position.y }
+            { frame: 0, value: baseY },
+            { frame: 60, value: baseY + 0.15 },
+            { frame: 120, value: baseY }
         ];
         floatAnim.setKeys(keys);
         building.animations.push(floatAnim);
         this.scene.beginAnimation(building, 0, 120, true);
 
-        this.buildings.push({ mesh: building, top: top, data: step });
+        this.buildings.push({ mesh: building, cap: cap, data: step, type: type, height: building._trapHeight });
+        return building._trapHeight;
     }
 
     /**
@@ -221,7 +420,7 @@ class CodeVisualizer {
         // Clear existing buildings
         this.buildings.forEach(b => {
             b.mesh.dispose();
-            b.top.dispose();
+            b.cap.dispose();
         });
         this.buildings = [];
         
@@ -232,8 +431,12 @@ class CodeVisualizer {
         // Parse the code
         const trace = this.parser.parse(codeTrace);
         
-        // Create spiral path
+        // Create descending spiral path
         const pathPoints = this.createSpiralPath(trace.length);
+
+        // Track the current parent CALL's building height so children
+        // can "build off" of it visually.
+        let currentCallHeight = 0;
 
         // Create buildings along the path
         trace.forEach((step, index) => {
@@ -241,9 +444,19 @@ class CodeVisualizer {
             const color = this.parser.getColorForType(step.type);
             
             setTimeout(() => {
-                this.createBuilding(index, position, color, step.type);
+                const builtHeight = this.createBuilding(
+                    index, position, color, step.type, step, currentCallHeight
+                );
+                // When we encounter a CALL, update the parent height
+                if (step.type === 'CALL') {
+                    currentCallHeight = builtHeight;
+                }
             }, index * 100); // Stagger the creation
         });
+
+        // Update camera target to the middle of the spiral
+        const midHeight = ((trace.length - 1) * 0.5) / 2;
+        this.camera.setTarget(new BABYLON.Vector3(0, midHeight, 0));
 
         // Update stats
         this.updateStats(trace.length);
@@ -260,11 +473,11 @@ class CodeVisualizer {
     }
 
     /**
-     * Reset camera to default position
+     * Reset camera to default position — looking at the top of the spiral
      */
     resetCamera() {
-        this.camera.setPosition(new BABYLON.Vector3(20, 15, 20));
-        this.camera.setTarget(BABYLON.Vector3.Zero());
+        this.camera.setPosition(new BABYLON.Vector3(25, 30, 25));
+        this.camera.setTarget(new BABYLON.Vector3(0, 10, 0));
     }
 
     /**

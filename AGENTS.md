@@ -19,17 +19,19 @@ You are a **virtual artist and visualization engineer** specializing in:
 ## Core Concept
 
 ### The Vision
-Transform linear code execution into a **3D spiral journey** where:
-- Each operation becomes a colorful "building" or structure
-- The execution path forms a **spiral road** ascending through space
+Transform linear code execution into a **3D descending spiral journey** where:
+- Each operation becomes a colorful trapezoid "building" with a unique shape based on its type
+- The execution path forms a **spiral road descending** from the sky to the ground
+- CALL operations are the grandest structures; child operations build off them
 - Stained-glass materials create a cathedral-like, reverent atmosphere
 - The visualization is both informative and meditative
 
 ### Why a Spiral?
 - **Compact**: Shows many execution steps in a condensed, viewable space
-- **Intuitive**: Natural reading flow (like a scroll or timeline)
+- **Intuitive**: Natural reading flow — execution flows **downward** like gravity, like reading a page
 - **Beautiful**: Creates interesting perspectives and patterns
 - **Meaningful**: Represents the cyclical nature of loops and recursion
+- **Descending**: The start is at the top (the "big picture") and details unfold downward
 
 ---
 
@@ -98,19 +100,58 @@ Each operation type has a signature color inspired by precious gems:
 
 ### Spatial Design
 
-**Spiral Path:**
-- Starts at origin (0, 0, 0)
+**Spiral Path (DESCENDING):**
+- Starts at the **TOP** (highest Y position) and spirals **downward**
+- Execution flow reads top-to-bottom, like gravity pulling code through time
 - Rotates 0.3 radians per step
 - Grows outward 0.3 units per step
-- Rises 0.5 units per step
-- Creates a golden-ratio-inspired ascending spiral
+- **Descends** 0.5 units per step
+- Step 0 (first operation) is at the peak; the last step is at the bottom
+- Camera defaults to a slightly elevated angle looking down at the spiral
 
-**Buildings/Structures:**
-- Height varies (1.5-3.5 units) based on operation importance
-- Positioned along the spiral path
-- Each has a glowing "roof" or top element
+**Buildings/Structures — Trapezoid Shapes:**
+- All buildings use **trapezoid prism** geometry (not uniform boxes)
+- Different top-width vs bottom-width creates dynamic, architectural silhouettes
+- Each operation type has a **unique shape profile and size hierarchy**
+- Buildings have a glowing "crown/cap" on top
 - Animated entrance (scale from 0 to 1)
 - Subtle floating animation for life
+
+### Operation Shape Hierarchy (Biggest → Smallest)
+
+Each operation type has a distinct trapezoid shape reflecting its importance in the execution flow:
+
+| Operation | Shape Style | Height Range | Bottom Width | Top Width | Role |
+|-----------|------------|--------------|--------------|-----------|------|
+| **CALL** | Trapezoid Tower | 4.0–5.5 | 1.8–2.4 | 0.6–0.8 | **Largest/tallest** — grand tower for function entry |
+| **RETURN** | Inverted Trapezoid | 3.0–4.0 | 1.2–1.6 | 0.8–1.0 | Tall capstone (narrow base, wide top) — function exit |
+| **LOOP** | Wide Trapezoid | 2.5–3.5 | 1.4–1.8 | 0.5–0.7 | Medium-large — repeating block structure |
+| **IF** | Angled Trapezoid | 2.0–3.0 | 1.0–1.4 | 0.4–0.6 | Medium — decision point |
+| **ELSE** | Angled Trapezoid | 1.8–2.8 | 1.0–1.4 | 0.4–0.6 | Medium — alternative path |
+| **DECL** | Slim Trapezoid | 1.5–2.5 | 0.8–1.2 | 0.5–0.7 | Medium-small — variable birth |
+| **ASSIGN** | Small Trapezoid | 1.0–1.8 | 0.6–1.0 | 0.3–0.5 | **Smallest** — incremental change |
+
+### Building-Off / Hierarchical Stacking
+
+Operations are not all placed at the same base level. Instead, they **build off their parent context**:
+
+- **CALL** operations are the foundation — they sit directly on the spiral path and are the tallest structures (the "cathedral towers")
+- **Child operations** (DECL, ASSIGN, LOOP, etc.) that occur within a function call are **vertically offset upward** by a fraction of their parent CALL's height
+- This creates a visual effect where inner operations **stack on top of** or **grow out of** their parent function call
+- The result is a layered, architectural look — like floors of a building rising from the CALL foundation
+- When a new CALL is encountered, it resets the base and starts a new tower
+
+### Why Trapezoids?
+- **Visual variety**: Different top/bottom widths create a dynamic, non-uniform skyline
+- **Metaphor**: Wide-base structures feel grounded and important (CALL); narrow ones feel transient (ASSIGN)
+- **Architecture**: Trapezoid shapes evoke real buildings — buttresses, towers, pyramids
+- **Readability**: You can tell operation types apart by silhouette alone
+
+### Trapezoid Mesh Technical Notes
+- Meshes are built with **per-face vertices** (24 vertices for 6 faces) to ensure correct flat-shaded normals
+- Both **X-width and Z-depth taper** from bottom to top, creating true truncated pyramid / frustum shapes (not just a box with different x-widths)
+- The depth tapers proportionally to the width ratio (`topDepth = depth * (topWidth / bottomWidth)`)
+- Inverted trapezoids (RETURN) swap top/bottom dimensions for a "capstone" silhouette
 
 ---
 
